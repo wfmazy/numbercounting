@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>姓名+数字游戏统计系统</title>
+    <style>
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .input-section { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+        #result { margin-top: 20px; padding: 15px; background: #e8f4ff; }
+        .highlight { color: #2196F3; font-weight: bold; }
+        input[type="number"] { width: 60px; margin: 0 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>数字游戏统计系统（含姓名）</h1>
+        
+        <!-- 学生输入界面 -->
+        <div class="input-section">
+            <h3>学生扫码输入界面</h3>
+            <form id="numberForm">
+                <div>
+                    <label>姓名：</label>
+                    <input type="text" id="studentName" required>
+                </div>
+                <div>
+                    <label>输入5个自然数：</label>
+                    <input type="number" min="1" required>
+                    <input type="number" min="1" required>
+                    <input type="number" min="1" required>
+                    <input type="number" min="1" required>
+                    <input type="number" min="1" required>
+                </div>
+                <button type="submit">提交</button>
+            </form>
+        </div>
+
+        <!-- 统计结果展示 -->
+        <div id="result">
+            <h3>实时统计结果</h3>
+            <p>提交人数：<span id="submitCount">0</span></p>
+            <p>有效最小值：<span id="validMin">-</span></p>
+            <p>胜出者：<span id="winners">尚未产生</span></p>
+            <h4>详细数据：</h4>
+            <div id="allData"></div>
+        </div>
+    </div>
+
+    <script>
+        // 存储结构优化（含姓名）
+        let allData = [];
+
+        document.getElementById('numberForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('studentName').value.trim();
+            const inputs = Array.from(this.querySelectorAll('input[type="number"]'));
+            const numbers = inputs.map(input => parseInt(input.value));
+
+            // 输入验证（参考网页[1]的合法性检查）
+            if (!name || numbers.some(n => isNaN(n) || n <= 0)) {
+                alert("请输入有效姓名和5个大于0的自然数");
+                return;
+            }
+
+            // 存储数据
+            allData.push({ name, numbers });
+            updateStatistics();
+            this.reset();
+        });
+
+        function updateStatistics() {
+            // 提取所有数字并排序
+            const allNumbers = allData.flatMap(d => d.numbers).sort((a,b) => a - b);
+            
+            // 核心算法：寻找无重复最小值（参考网页[2][3]的重复检测逻辑）
+            let validMin = null;
+            for (let num of allNumbers) {
+                const count = allNumbers.filter(n => n === num).length;
+                if (count === 1) {
+                    validMin = num;
+                    break;
+                }
+            }
+
+            // 查找胜出者
+            const winners = validMin ? 
+                allData.filter(d => d.numbers.includes(validMin)).map(d => d.name) : [];
+
+            // 更新显示
+            document.getElementById('submitCount').textContent = allData.length;
+            document.getElementById('validMin').textContent = validMin || "无有效值";
+            document.getElementById('winners').innerHTML = winners.length > 0 ?
+                `<span class="highlight">${winners.join(', ')}</span>` : "无";
+
+            // 显示详细数据
+            document.getElementById('allData').innerHTML = allData.map(d => 
+                `<div>${d.name}: [${d.numbers.join(', ')}]</div>`
+            ).join('');
+        }
+    </script>
+</body>
+</html>
